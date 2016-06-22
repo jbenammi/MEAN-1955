@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" ng-app='myApp'>
+<head>
+	<meta charset="UTF-8">
+	<meta name="author" content="Jonathan Ben-Ammi">
+	<title></title>
+	<meta name="description" content="">
+	<link rel="stylesheet" type="text/css" href="./../static/css/materialize.css">
+	<link rel="stylesheet" type="text/css" href="./../static/css/style.css">
+	<script src="./../static/js/jquery-2.2.3.js"></script>
+	<script src="./../static/js/jquery-ui.js"></script>
+	<script src="./../static/js/materialize.js"></script>
+	<script src="./../static/js/angular.js"></script>
+	<script src="./../static/js/angular-route.js"></script>
+	<script type="text/javascript">
+		var myApp = angular.module('myApp', []);
+
+		myApp.factory('birthdateFactory', function($http){
+			var factory = {}
+			var people = []
+
+			factory.showAll = function(callback){
+				$http.get('/birthdates').success(function(data){
+					callback(data);
+				})
+			}
+			factory.create = function(data, callback){
+				$http.post('/new', data).success(function(info){
+					callback()
+				})
+			}
+			factory.delete = function(id, callback){
+				$http.delete('/remove/' + id).success(function(info){
+					callback()
+				})
+			}
+
+			return factory
+		})
+
+		myApp.controller('birthdatesController', function(birthdateFactory){
+			var self = this
+			self.people = []
+			self.newPerson = {};
+
+			birthdateFactory.showAll(function(data){
+				self.people = data;
+			});
+
+			self.create = function(){
+				birthdateFactory.create(self.newPerson, function(){
+					birthdateFactory.showAll(function(data){
+						self.people = data;
+					})
+					self.newPerson = {};
+				})
+			}
+			self.delete = function(id){
+				birthdateFactory.delete(id, function(){
+					birthdateFactory.showAll(function(data){
+						self.people = data;
+					})
+				})
+			}
+		})
+	</script>
+</head>
+<body>
+	<div class="container row" ng-controller='birthdatesController as bCon'>
+		<h4>1955 Dashboard</h4>
+		<div class="divider"></div>
+		<div class="col s4 offset-s8">
+			<p><u>Add people who were born in 1955!</u></p>
+			<input type="text" ng-model='bCon.newPerson.name' ng-minlength='4' ng-maxlength='100' required placeholder="Bill Gates" />
+			<button class="btn waves-effect waves-light purple right" ng-click='bCon.create()'>Submit</button>
+		</div>
+		<table>
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Action</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat='person in bCon.people'>
+					<td ng-bind='person.name'></td>
+					<td><button class="btn waves-effect waves-light red" ng-click='bCon.delete(person._id)'>Delete</button></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>
